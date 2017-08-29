@@ -104,10 +104,6 @@ public class DigestUtil {
     return Digest.newBuilder().setHash(hexHash).setSizeBytes(size).build();
   }
 
-  public String toString(Digest digest) {
-    return digest.getHash() + "/" + digest.getSizeBytes();
-  }
-
   public static Digest getFromInputCache(ActionInput input, MetadataProvider cache)
       throws IOException {
     Metadata metadata = cache.getMetadata(input);
@@ -117,5 +113,9 @@ public class DigestUtil {
         "Null digest for %s, possible directory. Data dependencies on directories are not allowed.",
         input);
     return buildDigest(metadata.getDigest(), metadata.getSize());
+  }
+
+  public static String toString(Digest digest) {
+    return String.format("%s/%d", digest.getHash(), digest.getSizeBytes());
   }
 }

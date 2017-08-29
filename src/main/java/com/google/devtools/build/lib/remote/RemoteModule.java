@@ -125,7 +125,8 @@ public final class RemoteModule extends BlazeModule {
                     remoteOptions,
                     GoogleAuthUtils.newCredentials(authAndTlsOptions),
                     env.getWorkingDirectory()),
-                digestUtil);
+                digestUtil,
+                remoteOptions);
       } else if (grpcCache || remoteOptions.remoteExecutor != null) {
         // If a remote executor but no remote cache is specified, assume both at the same target.
         String target = grpcCache ? remoteOptions.remoteCache : remoteOptions.remoteExecutor;

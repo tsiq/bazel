@@ -104,6 +104,7 @@ final class RemoteSpawnCache implements SpawnCache {
             spawn.getExecutionPlatform(),
             policy.getTimeout(),
             Spawns.mayBeCached(spawn));
+    String progressMessage = spawn.getResourceOwner().getProgressMessage();
 
     // Look up action cache, and reuse the action output if it is found.
     final ActionKey actionKey = digestUtil.computeActionKey(action);
@@ -115,7 +116,7 @@ final class RemoteSpawnCache implements SpawnCache {
     try {
       ActionResult result =
           this.options.remoteAcceptCached && Spawns.mayBeCached(spawn)
-              ? remoteCache.getCachedActionResult(actionKey)
+              ? remoteCache.getCachedActionResult(actionKey, progressMessage)
               : null;
       if (result != null) {
         // We don't cache failed actions, so we know the outputs exist.
@@ -173,7 +174,7 @@ final class RemoteSpawnCache implements SpawnCache {
                   && result.exitCode() == 0;
           Context previous = withMetadata.attach();
           try {
-            remoteCache.upload(actionKey, execRoot, files, policy.getFileOutErr(), uploadAction);
+            remoteCache.upload(actionKey, execRoot, files, policy.getFileOutErr(), uploadAction, progressMessage);
           } catch (IOException e) {
             if (verboseFailures) {
               report(Event.debug("Upload to remote cache failed: " + e.getMessage()));

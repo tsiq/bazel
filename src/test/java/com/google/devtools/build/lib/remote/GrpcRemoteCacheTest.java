@@ -678,7 +678,7 @@ public class GrpcRemoteCacheTest {
     ActionKey emptyKey = DIGEST_UTIL.computeActionKey(Action.getDefaultInstance());
     Path fooFile = execRoot.getRelative("a/foo");
     Path barFile = execRoot.getRelative("bar");
-    client.upload(emptyKey, execRoot, ImmutableList.<Path>of(fooFile, barFile), outErr, false);
+    client.upload(emptyKey, execRoot, ImmutableList.<Path>of(fooFile, barFile), outErr, false, "testUploadUploadsOnlyOutputs");
   }
 
   @Test
@@ -796,7 +796,7 @@ public class GrpcRemoteCacheTest {
               }
             });
     client.upload(
-        actionKey, execRoot, ImmutableList.<Path>of(fooFile, barFile, bazFile), outErr, true);
+        actionKey, execRoot, ImmutableList.<Path>of(fooFile, barFile, bazFile), outErr, true, "testUploadCacheMissesWithRetries");
     // 4 times for the errors, 3 times for the successful uploads.
     Mockito.verify(mockByteStreamImpl, Mockito.times(7))
         .write(Mockito.<StreamObserver<WriteResponse>>anyObject());
@@ -817,6 +817,6 @@ public class GrpcRemoteCacheTest {
                 (numErrors-- <= 0 ? Status.NOT_FOUND : Status.UNAVAILABLE).asRuntimeException());
           }
         });
-    assertThat(client.getCachedActionResult(actionKey)).isNull();
+    assertThat(client.getCachedActionResult(actionKey, "testGetCachedActionResultWithRetries")).isNull();
   }
 }

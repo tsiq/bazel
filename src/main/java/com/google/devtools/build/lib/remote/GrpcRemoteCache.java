@@ -51,6 +51,7 @@ import io.grpc.StatusRuntimeException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -71,6 +72,8 @@ public class GrpcRemoteCache extends AbstractRemoteActionCache {
   private final ListeningScheduledExecutorService retryScheduler =
       MoreExecutors.listeningDecorator(Executors.newScheduledThreadPool(1));
 
+  private final OutputStream logStream;
+
   @VisibleForTesting
   public GrpcRemoteCache(
       Channel channel,
@@ -86,6 +89,12 @@ public class GrpcRemoteCache extends AbstractRemoteActionCache {
 
     uploader = new ByteStreamUploader(options.remoteInstanceName, channel, credentials,
         options.remoteTimeout, retrier, retryScheduler);
+
+    logStream = new AsynchronousFileStream(options.remoteCacheLogFilename);
+  }
+
+  private void log(String log) throws IOException {
+    logStream.write((log + "\n").getBytes());
   }
 
   private ContentAddressableStorageBlockingStub casBlockingStub() {
@@ -113,6 +122,11 @@ public class GrpcRemoteCache extends AbstractRemoteActionCache {
   public void close() {
     retryScheduler.shutdownNow();
     uploader.shutdown();
+    try {
+      logStream.close();
+    } catch (IOException ex) {
+      /* ignore */
+    }
   }
 
   public static boolean isRemoteCacheOptions(RemoteOptions options) {
@@ -237,13 +251,15 @@ public class GrpcRemoteCache extends AbstractRemoteActionCache {
       Path execRoot,
       Collection<Path> files,
       FileOutErr outErr,
-      boolean uploadAction)
+      boolean uploadAction,
+      String contentId)
       throws IOException, InterruptedException {
     ActionResult.Builder result = ActionResult.newBuilder();
     upload(execRoot, files, outErr, result);
     if (!uploadAction) {
       return;
     }
+    log("PUT-ACTION," + actionKey + "," + contentId);
     try {
       retrier.execute(
           () ->
@@ -350,10 +366,11 @@ public class GrpcRemoteCache extends AbstractRemoteActionCache {
   // Execution Cache API
 
   @Override
-  public ActionResult getCachedActionResult(ActionKey actionKey)
+  public ActionResult getCachedActionResult(ActionKey actionKey, String contentId)
       throws IOException, InterruptedException {
+    log("GET-ACTION," + actionKey + "," + contentId);
     try {
-      return retrier.execute(
+      ActionResult result = retrier.execute(
           () ->
               acBlockingStub()
                   .getActionResult(
@@ -361,9 +378,11 @@ public class GrpcRemoteCache extends AbstractRemoteActionCache {
                           .setInstanceName(options.remoteInstanceName)
                           .setActionDigest(actionKey.getDigest())
                           .build()));
+      return result;
     } catch (RetryException e) {
       if (RemoteRetrierUtils.causedByStatus(e, Status.Code.NOT_FOUND)) {
         // Return null to indicate that it was a cache miss.
+        log("SKIPPED-PUT-ACTION," + actionKey + "," + contentId);
         return null;
       }
       throw e;

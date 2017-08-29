@@ -276,7 +276,10 @@ final class ExecutionServer extends ExecutionImplBase {
     ActionResult finalResult = result.setExitCode(exitCode).build();
     if (exitCode == 0 && !action.getDoNotCache()) {
       ActionKey actionKey = digestUtil.computeActionKey(action);
-      cache.setCachedActionResult(actionKey, finalResult);
+      cache.setCachedActionResult(
+          actionKey,
+          finalResult,
+          "ExecutionServer#execute(" + Digests.toString(actionKey.getDigest()) + ")");
     }
     return finalResult;
   }

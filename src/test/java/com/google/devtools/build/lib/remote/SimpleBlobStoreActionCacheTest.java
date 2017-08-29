@@ -26,6 +26,7 @@ import com.google.devtools.build.lib.vfs.FileSystem.HashFunction;
 import com.google.devtools.build.lib.vfs.FileSystemUtils;
 import com.google.devtools.build.lib.vfs.Path;
 import com.google.devtools.build.lib.vfs.inmemoryfs.InMemoryFileSystem;
+import com.google.devtools.common.options.Options;
 import com.google.devtools.remoteexecution.v1test.ActionResult;
 import com.google.devtools.remoteexecution.v1test.Digest;
 import com.google.devtools.remoteexecution.v1test.Directory;
@@ -72,7 +73,10 @@ public class SimpleBlobStoreActionCacheTest {
   }
 
   private SimpleBlobStoreActionCache newClient(ConcurrentMap<String, byte[]> map) {
-    return new SimpleBlobStoreActionCache(new ConcurrentMapBlobStore(map), DIGEST_UTIL);
+    return new SimpleBlobStoreActionCache(
+        new ConcurrentMapBlobStore(map),
+        DIGEST_UTIL,
+        Options.getDefaults(RemoteOptions.class));
   }
 
   @Test

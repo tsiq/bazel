@@ -76,7 +76,7 @@ public abstract class AbstractRemoteActionCache implements AutoCloseable {
    *
    * @throws IOException if the remote cache is unavailable.
    */
-  abstract @Nullable ActionResult getCachedActionResult(DigestUtil.ActionKey actionKey)
+  abstract @Nullable ActionResult getCachedActionResult(DigestUtil.ActionKey actionKey, String contentId)
       throws IOException, InterruptedException;
 
   /**
@@ -91,7 +91,8 @@ public abstract class AbstractRemoteActionCache implements AutoCloseable {
       Path execRoot,
       Collection<Path> files,
       FileOutErr outErr,
-      boolean uploadAction)
+      boolean uploadAction,
+      String contentId)
       throws IOException, InterruptedException;
 
   /**

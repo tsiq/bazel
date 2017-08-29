@@ -54,9 +54,17 @@ public final class SimpleBlobStoreActionCache extends AbstractRemoteActionCache 
 
   private final SimpleBlobStore blobStore;
 
-  public SimpleBlobStoreActionCache(SimpleBlobStore blobStore, DigestUtil digestUtil) {
+  private final OutputStream logStream;
+
+  public SimpleBlobStoreActionCache(SimpleBlobStore blobStore, DigestUtil digestUtil, RemoteOptions options) {
     super(digestUtil);
     this.blobStore = blobStore;
+
+    logStream = new AsynchronousFileStream(options.remoteCacheLogFilename);
+  }
+
+  private void log(String log) throws IOException {
+    logStream.write((log + "\n").getBytes());
   }
 
   @Override
@@ -112,7 +120,8 @@ public final class SimpleBlobStoreActionCache extends AbstractRemoteActionCache 
       Path execRoot,
       Collection<Path> files,
       FileOutErr outErr,
-      boolean uploadAction)
+      boolean uploadAction,
+      String contentId)
       throws IOException, InterruptedException {
     ActionResult.Builder result = ActionResult.newBuilder();
     upload(result, execRoot, files);
@@ -125,7 +134,7 @@ public final class SimpleBlobStoreActionCache extends AbstractRemoteActionCache 
       result.setStdoutDigest(stdout);
     }
     if (uploadAction) {
-      blobStore.putActionResult(actionKey.getDigest().getHash(), result.build().toByteArray());
+      setCachedActionResult(actionKey, result.build(), contentId);
     }
   }
 
@@ -178,12 +187,16 @@ public final class SimpleBlobStoreActionCache extends AbstractRemoteActionCache 
   }
 
   @Override
-  public ActionResult getCachedActionResult(ActionKey actionKey)
+  public ActionResult getCachedActionResult(ActionKey actionKey, String contentId)
       throws IOException, InterruptedException {
     try {
+      log("GET-ACTION," + actionKey + "," + contentId);
       byte[] data = downloadActionResult(actionKey.getDigest());
-      return ActionResult.parseFrom(data);
-    } catch (InvalidProtocolBufferException | CacheNotFoundException e) {
+      ActionResult result = ActionResult.parseFrom(data);
+      return result;
+    } catch (InvalidProtocolBufferException e) {
+      return null;
+    } catch (CacheNotFoundException e) {
       return null;
     }
   }
@@ -201,14 +214,20 @@ public final class SimpleBlobStoreActionCache extends AbstractRemoteActionCache 
     return out.toByteArray();
   }
 
-  public void setCachedActionResult(ActionKey actionKey, ActionResult result)
+  public void setCachedActionResult(ActionKey actionKey, ActionResult result, String contentId)
       throws IOException, InterruptedException {
+    log("PUT-ACTION," + actionKey + "," + contentId);
     blobStore.putActionResult(actionKey.getDigest().getHash(), result.toByteArray());
   }
 
   @Override
   public void close() {
     blobStore.close();
+    try {
+      logStream.close();
+    } catch (IOException ex) {
+      /* ignore */
+    }
   }
 
   @Override

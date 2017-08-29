@@ -223,4 +223,16 @@ public final class RemoteOptions extends OptionsBase {
         + "writing of files, which could cause false positives."
   )
   public boolean experimentalGuardAgainstConcurrentChanges;
+
+  @Option(
+    name = "remote_cache_log_filename",
+    defaultValue = "null",
+    category = "remote",
+    documentationCategory = OptionDocumentationCategory.LOGGING,
+    effectTags = {OptionEffectTag.BAZEL_MONITORING},
+    help = "Log remote cache interactions to this file. Each entry contains the following:"
+        + " 'ACTION,KEY,ID', ACTION is the request type, KEY is the cache's identifier,"
+        + " ID is a context description identifier for the request."
+  )
+  public String remoteCacheLogFilename;
 }

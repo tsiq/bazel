@@ -142,11 +142,12 @@ class RemoteSpawnRunner implements SpawnRunner {
     try {
       boolean acceptCachedResult = options.remoteAcceptCached && Spawns.mayBeCached(spawn);
       boolean uploadLocalResults = options.remoteUploadLocalResults;
+      String progressMessage = spawn.getResourceOwner().getProgressMessage();
 
       try {
         // Try to lookup the action in the action cache.
         ActionResult cachedResult =
-            acceptCachedResult ? remoteCache.getCachedActionResult(actionKey) : null;
+            acceptCachedResult ? remoteCache.getCachedActionResult(actionKey, progressMessage) : null;
         if (cachedResult != null) {
           if (cachedResult.getExitCode() != 0) {
             // The remote cache must never serve a failed action.
@@ -390,7 +391,8 @@ class RemoteSpawnRunner implements SpawnRunner {
           Spawns.mayBeCached(spawn)
               && Status.SUCCESS.equals(result.status())
               && result.exitCode() == 0;
-      remoteCache.upload(actionKey, execRoot, outputFiles, policy.getFileOutErr(), uploadAction);
+      String progressMessage = spawn.getResourceOwner().getProgressMessage();
+      remoteCache.upload(actionKey, execRoot, outputFiles, policy.getFileOutErr(), uploadAction, progressMessage);
     } catch (IOException e) {
       if (verboseFailures) {
         report(Event.debug("Upload to remote cache failed: " + e.getMessage()));

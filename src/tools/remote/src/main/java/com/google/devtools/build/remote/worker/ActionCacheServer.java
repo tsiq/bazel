@@ -43,7 +43,9 @@ final class ActionCacheServer extends ActionCacheImplBase {
       GetActionResultRequest request, StreamObserver<ActionResult> responseObserver) {
     try {
       ActionKey actionKey = digestUtil.asActionKey(request.getActionDigest());
-      ActionResult result = cache.getCachedActionResult(actionKey);
+      ActionResult result = cache.getCachedActionResult(
+          actionKey,
+          "ActionCacheServer#getActionResult(" + Digests.toString(actionKey.getDigest()) + ")");
 
       if (result == null) {
         responseObserver.onError(StatusUtils.notFoundError(request.getActionDigest()));
@@ -63,7 +65,10 @@ final class ActionCacheServer extends ActionCacheImplBase {
       UpdateActionResultRequest request, StreamObserver<ActionResult> responseObserver) {
     try {
       ActionKey actionKey = digestUtil.asActionKey(request.getActionDigest());
-      cache.setCachedActionResult(actionKey, request.getActionResult());
+      cache.setCachedActionResult(
+          actionKey,
+          request.getActionResult(),
+          "ActionCacheServer#updateActionResult(" + Digests.toString(actionKey.getDigest()) + ")");
       responseObserver.onNext(request.getActionResult());
       responseObserver.onCompleted();
     } catch (Exception e) {
