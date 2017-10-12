@@ -118,6 +118,18 @@ public final class RemoteModule extends BlazeModule {
       // TODO(davido): The naming is wrong here. "Remote"-prefix in RemoteActionCache class has no
       // meaning.
       final AbstractRemoteActionCache cache;
+      AtomicLogger cacheLogger;
+      if (remoteOptions.remoteCacheLogFilename == null) {
+        cacheLogger = null;
+      } else {
+        try {
+          cacheLogger = new AtomicLogger(remoteOptions.remoteCacheLogFilename);
+        } catch (IOException e) {
+          cacheLogger = null;
+          env.getReporter().handle(Event.error("Error while creating remote action cache log file: " + e.getMessage()));
+        }
+      }
+
       if (remoteOrLocalCache) {
         cache =
             new SimpleBlobStoreActionCache(
@@ -126,7 +138,7 @@ public final class RemoteModule extends BlazeModule {
                     GoogleAuthUtils.newCredentials(authAndTlsOptions),
                     env.getWorkingDirectory()),
                 digestUtil,
-                remoteOptions);
+                cacheLogger);
       } else if (grpcCache || remoteOptions.remoteExecutor != null) {
         // If a remote executor but no remote cache is specified, assume both at the same target.
         String target = grpcCache ? remoteOptions.remoteCache : remoteOptions.remoteExecutor;
@@ -137,7 +149,8 @@ public final class RemoteModule extends BlazeModule {
                 GoogleAuthUtils.newCallCredentials(authAndTlsOptions),
                 remoteOptions,
                 retrier,
-                digestUtil);
+                digestUtil,
+                cacheLogger);
       } else {
         cache = null;
       }
@@ -154,7 +167,7 @@ public final class RemoteModule extends BlazeModule {
         executor = null;
       }
 
-      actionContextProvider = new RemoteActionContextProvider(env, cache, executor, digestUtil);
+      actionContextProvider = new RemoteActionContextProvider(env, cache, cacheLogger, executor, digestUtil);
     } catch (IOException e) {
       env.getReporter().handle(Event.error(e.getMessage()));
       env.getBlazeModuleEnvironment().exit(new AbruptExitException(ExitCode.COMMAND_LINE_ERROR));

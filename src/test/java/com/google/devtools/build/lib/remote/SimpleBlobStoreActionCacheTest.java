@@ -73,10 +73,7 @@ public class SimpleBlobStoreActionCacheTest {
   }
 
   private SimpleBlobStoreActionCache newClient(ConcurrentMap<String, byte[]> map) {
-    return new SimpleBlobStoreActionCache(
-        new ConcurrentMapBlobStore(map),
-        DIGEST_UTIL,
-        Options.getDefaults(RemoteOptions.class));
+    return new SimpleBlobStoreActionCache(new ConcurrentMapBlobStore(map), DIGEST_UTIL, null);
   }
 
   @Test

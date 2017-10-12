@@ -17,6 +17,7 @@ package com.google.devtools.build.lib.remote;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import com.google.devtools.build.lib.actions.ActionInput;
 import com.google.devtools.build.lib.actions.ActionInputFileCache;
 import com.google.devtools.build.lib.actions.EnvironmentalExecException;
@@ -78,6 +79,7 @@ class RemoteSpawnRunner implements SpawnRunner {
 
   @Nullable private final Reporter cmdlineReporter;
   @Nullable private final AbstractRemoteActionCache remoteCache;
+  @Nullable private final AtomicLogger remoteCacheLogger;
   @Nullable private final GrpcRemoteExecutor remoteExecutor;
   private final String buildRequestId;
   private final String commandId;
@@ -95,12 +97,14 @@ class RemoteSpawnRunner implements SpawnRunner {
       String buildRequestId,
       String commandId,
       @Nullable AbstractRemoteActionCache remoteCache,
+      @Nullable AtomicLogger remoteCacheLogger,
       @Nullable GrpcRemoteExecutor remoteExecutor,
       DigestUtil digestUtil) {
     this.execRoot = execRoot;
     this.options = options;
     this.fallbackRunner = fallbackRunner;
     this.remoteCache = remoteCache;
+    this.remoteCacheLogger = remoteCacheLogger;
     this.remoteExecutor = remoteExecutor;
     this.verboseFailures = verboseFailures;
     this.cmdlineReporter = cmdlineReporter;
@@ -148,6 +152,22 @@ class RemoteSpawnRunner implements SpawnRunner {
         // Try to lookup the action in the action cache.
         ActionResult cachedResult =
             acceptCachedResult ? remoteCache.getCachedActionResult(actionKey, progressMessage) : null;
+
+        if (acceptCachedResult && (options.logAllActions ||
+            (cachedResult == null && options.logMissedActions))) {
+          StringBuilder logMissedActionsBuilder = new StringBuilder();
+
+          String actionKeyString = DigestUtil.toString(actionKey.getDigest());
+          logMissedActionsBuilder.append(actionKeyString + ": outputs: " + Iterables.transform(spawn.getOutputFiles(), (outputFile) -> outputFile.getExecPathString()) + "\n");
+          logMissedActionsBuilder.append(actionKeyString + ": args: " + spawn.getArguments() + "\n");
+          logMissedActionsBuilder.append(actionKeyString + ": envp: " + spawn.getEnvironment() + "\n");
+          logMissedActionsBuilder.append(actionKeyString + ": platform: " + action.getPlatform() + "\n");
+          logMissedActionsBuilder.append(actionKeyString + ": timeout: " + policy.getTimeout() + "\n");
+          repository.printMerkleTree(logMissedActionsBuilder, inputRoot);
+
+          remoteCacheLogger.log(logMissedActionsBuilder.toString());
+        }
+
         if (cachedResult != null) {
           if (cachedResult.getExitCode() != 0) {
             // The remote cache must never serve a failed action.

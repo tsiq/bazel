@@ -407,6 +407,23 @@ public final class TreeNodeRepository extends TreeTraverser<TreeNodeRepository.T
         : treeNodeDigestCache.get(node);
   }
 
+  public synchronized void printMerkleTree(Appendable output, TreeNode node) throws IOException {
+    printNode(output, node, "");
+  }
+
+  private void printNode(Appendable output, TreeNode node, String indent) throws IOException {
+    Digest digest = getMerkleDigest(node);
+    if (node.getActionInput() == null) {
+      output.append(indent + "Directory: " + DigestUtil.toString(digest) + "\n");
+    } else {
+      output.append(indent + "ActionInput: " + DigestUtil.toString(digest) + ": " + node.getActionInput().getExecPathString() + "\n");
+    }
+    for (TreeNode.ChildEntry childEntry : node.getChildEntries()) {
+      output.append(indent + "ChildEntry: " + childEntry.getSegment() + "\n");
+      printNode(output, childEntry.getChild(), indent + "  ");
+    }
+  }
+
   /**
    * Returns the precomputed digests for both data and metadata. Should only be used after
    * computeMerkleDigests has been called on one of the node ancestors.

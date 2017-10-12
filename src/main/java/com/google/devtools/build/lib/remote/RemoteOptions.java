@@ -50,6 +50,28 @@ public final class RemoteOptions extends OptionsBase {
   public int restCachePoolSize;
 
   @Option(
+    name = "remote_cache_log_missed_actions",
+    defaultValue = "false",
+    category = "remote",
+    documentationCategory = OptionDocumentationCategory.LOGGING,
+    effectTags = {OptionEffectTag.BAZEL_MONITORING},
+    help = "Log action definition with remote action cache misses. "
+            + "Only functional with remote logging"
+  )
+  public boolean logMissedActions;
+
+  @Option(
+    name = "remote_cache_log_all_actions",
+    defaultValue = "false",
+    category = "remote",
+    documentationCategory = OptionDocumentationCategory.LOGGING,
+    effectTags = {OptionEffectTag.BAZEL_MONITORING},
+    help = "Log action definition for remote action cache. "
+            + "Only functional with remote logging"
+  )
+  public boolean logAllActions;
+
+  @Option(
     name = "remote_executor",
     defaultValue = "null",
     category = "remote",

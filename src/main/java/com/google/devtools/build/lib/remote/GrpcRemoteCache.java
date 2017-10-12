@@ -72,7 +72,7 @@ public class GrpcRemoteCache extends AbstractRemoteActionCache {
   private final ListeningScheduledExecutorService retryScheduler =
       MoreExecutors.listeningDecorator(Executors.newScheduledThreadPool(1));
 
-  private final OutputStream logStream;
+  private final AtomicLogger logger;
 
   @VisibleForTesting
   public GrpcRemoteCache(
@@ -80,21 +80,23 @@ public class GrpcRemoteCache extends AbstractRemoteActionCache {
       CallCredentials credentials,
       RemoteOptions options,
       RemoteRetrier retrier,
-      DigestUtil digestUtil) {
+      DigestUtil digestUtil,
+      AtomicLogger logger) {
     super(digestUtil);
     this.options = options;
     this.credentials = credentials;
     this.channel = channel;
+    this.logger = logger;
     this.retrier = retrier;
 
     uploader = new ByteStreamUploader(options.remoteInstanceName, channel, credentials,
         options.remoteTimeout, retrier, retryScheduler);
-
-    logStream = new AsynchronousFileStream(options.remoteCacheLogFilename);
   }
 
-  private void log(String log) throws IOException {
-    logStream.write((log + "\n").getBytes());
+  private void log(String message) throws IOException {
+    if (logger != null && logger.isOpen()) {
+      logger.log(message + "\n");
+    }
   }
 
   private ContentAddressableStorageBlockingStub casBlockingStub() {
@@ -122,10 +124,12 @@ public class GrpcRemoteCache extends AbstractRemoteActionCache {
   public void close() {
     retryScheduler.shutdownNow();
     uploader.shutdown();
-    try {
-      logStream.close();
-    } catch (IOException ex) {
-      /* ignore */
+    if (logger != null) {
+      try {
+        logger.close();
+      } catch (IOException ex) {
+        /* ignore */
+      }
     }
   }
 

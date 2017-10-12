@@ -54,17 +54,21 @@ public final class SimpleBlobStoreActionCache extends AbstractRemoteActionCache 
 
   private final SimpleBlobStore blobStore;
 
-  private final OutputStream logStream;
+  private final AtomicLogger logger;
 
-  public SimpleBlobStoreActionCache(SimpleBlobStore blobStore, DigestUtil digestUtil, RemoteOptions options) {
+  public SimpleBlobStoreActionCache(
+      SimpleBlobStore blobStore,
+      DigestUtil digestUtil,
+      AtomicLogger logger) {
     super(digestUtil);
     this.blobStore = blobStore;
-
-    logStream = new AsynchronousFileStream(options.remoteCacheLogFilename);
+    this.logger = logger;
   }
 
-  private void log(String log) throws IOException {
-    logStream.write((log + "\n").getBytes());
+  private void log(String message) throws IOException {
+    if (logger != null && logger.isOpen()) {
+      logger.log(message + "\n");
+    }
   }
 
   @Override
@@ -223,10 +227,12 @@ public final class SimpleBlobStoreActionCache extends AbstractRemoteActionCache 
   @Override
   public void close() {
     blobStore.close();
-    try {
-      logStream.close();
-    } catch (IOException ex) {
-      /* ignore */
+    if (logger != null) {
+      try {
+        logger.close();
+      } catch (IOException ex) {
+        /* ignore */
+      }
     }
   }
 

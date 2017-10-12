@@ -240,7 +240,7 @@ public class GrpcRemoteExecutionClientTest {
     CallCredentials creds =
         GoogleAuthUtils.newCallCredentials(Options.getDefaults(AuthAndTLSOptions.class));
     GrpcRemoteCache remoteCache =
-        new GrpcRemoteCache(channel, creds, options, retrier, DIGEST_UTIL);
+        new GrpcRemoteCache(channel, creds, options, retrier, DIGEST_UTIL, null);
     client =
         new RemoteSpawnRunner(
             execRoot,
@@ -251,6 +251,7 @@ public class GrpcRemoteExecutionClientTest {
             "build-req-id",
             "command-id",
             remoteCache,
+            null,
             executor,
             DIGEST_UTIL);
     inputDigest = fakeFileCache.createScratchInput(simpleSpawn.getInputFiles().get(0), "xyz");

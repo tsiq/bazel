@@ -35,17 +35,20 @@ import javax.annotation.Nullable;
 final class RemoteActionContextProvider extends ActionContextProvider {
   private final CommandEnvironment env;
   private final AbstractRemoteActionCache cache;
+  private final AtomicLogger cacheLogger;
   private final GrpcRemoteExecutor executor;
   private final DigestUtil digestUtil;
 
   RemoteActionContextProvider(
       CommandEnvironment env,
       @Nullable AbstractRemoteActionCache cache,
+      @Nullable AtomicLogger cacheLogger,
       @Nullable GrpcRemoteExecutor executor,
       DigestUtil digestUtil) {
     this.env = env;
     this.executor = executor;
     this.cache = cache;
+    this.cacheLogger = cacheLogger;
     this.digestUtil = digestUtil;
   }
 
@@ -80,6 +83,7 @@ final class RemoteActionContextProvider extends ActionContextProvider {
               buildRequestId,
               commandId,
               cache,
+              cacheLogger,
               executor,
               digestUtil);
       return ImmutableList.of(new RemoteSpawnStrategy(env.getExecRoot(), spawnRunner));

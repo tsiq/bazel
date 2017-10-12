@@ -169,7 +169,8 @@ public class GrpcRemoteCacheTest {
         creds,
         remoteOptions,
         retrier,
-        DIGEST_UTIL);
+        DIGEST_UTIL,
+        null);
   }
 
   @Test

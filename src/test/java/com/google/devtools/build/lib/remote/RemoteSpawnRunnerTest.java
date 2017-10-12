@@ -133,6 +133,7 @@ public class RemoteSpawnRunnerTest {
             "build-req-id",
             "command-id",
             cache,
+            null,
             executor,
             digestUtil);
 
@@ -193,6 +194,7 @@ public class RemoteSpawnRunnerTest {
             "command-id",
             cache,
             null,
+            null,
             digestUtil);
 
     // Throw an IOException to trigger the local fallback.
@@ -246,6 +248,7 @@ public class RemoteSpawnRunnerTest {
                 "command-id",
                 cache,
                 null,
+                null,
                 digestUtil));
 
     Spawn spawn = newSimpleSpawn();
@@ -295,6 +298,7 @@ public class RemoteSpawnRunnerTest {
                 "command-id",
                 cache,
                 null,
+                null,
                 digestUtil));
 
     try {
@@ -328,6 +332,7 @@ public class RemoteSpawnRunnerTest {
             "build-req-id",
             "command-id",
             cache,
+            null,
             null,
             digestUtil);
 
@@ -381,6 +386,7 @@ public class RemoteSpawnRunnerTest {
             "command-id",
             cache,
             null,
+            null,
             digestUtil);
 
     Spawn spawn = newSimpleSpawn();
@@ -420,6 +426,7 @@ public class RemoteSpawnRunnerTest {
             "command-id",
             cache,
             null,
+            null,
             digestUtil);
 
     Spawn spawn = newSimpleSpawn();
@@ -455,6 +462,7 @@ public class RemoteSpawnRunnerTest {
             "build-req-id",
             "command-id",
             cache,
+            null,
             executor,
             digestUtil);
 
@@ -493,6 +501,7 @@ public class RemoteSpawnRunnerTest {
             "build-req-id",
             "command-id",
             cache,
+            null,
             executor,
             digestUtil);
 
@@ -534,6 +543,7 @@ public class RemoteSpawnRunnerTest {
             "build-req-id",
             "command-id",
             cache,
+            null,
             executor,
             digestUtil);
 
@@ -570,6 +580,7 @@ public class RemoteSpawnRunnerTest {
             "build-req-id",
             "command-id",
             cache,
+            null,
             executor,
             digestUtil);
 
@@ -604,6 +615,7 @@ public class RemoteSpawnRunnerTest {
             "build-req-id",
             "command-id",
             cache,
+            null,
             executor,
             digestUtil);
 
@@ -644,6 +656,7 @@ public class RemoteSpawnRunnerTest {
             "build-req-id",
             "command-id",
             cache,
+            null,
             executor,
             digestUtil);
 
@@ -680,6 +693,7 @@ public class RemoteSpawnRunnerTest {
             "build-req-id",
             "command-id",
             cache,
+            null,
             executor,
             digestUtil);
 
