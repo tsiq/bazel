@@ -259,7 +259,7 @@ public class GrpcRemoteCache extends AbstractRemoteActionCache {
       String contentId)
       throws IOException, InterruptedException {
     ActionResult.Builder result = ActionResult.newBuilder();
-    upload(execRoot, files, outErr, result);
+    upload(execRoot, files, outErr, result, contentId);
     if (!uploadAction) {
       return;
     }
@@ -283,7 +283,7 @@ public class GrpcRemoteCache extends AbstractRemoteActionCache {
     }
   }
 
-  void upload(Path execRoot, Collection<Path> files, FileOutErr outErr, ActionResult.Builder result)
+  void upload(Path execRoot, Collection<Path> files, FileOutErr outErr, ActionResult.Builder result, String contentId)
       throws IOException, InterruptedException {
     UploadManifest manifest = new UploadManifest(result, execRoot);
     manifest.addFiles(files);
@@ -298,6 +298,7 @@ public class GrpcRemoteCache extends AbstractRemoteActionCache {
 
     ImmutableSet<Digest> digestsToUpload = getMissingDigests(digests);
     for (Digest digest : digestsToUpload) {
+      log("Upload digest, " + digest);
       Chunker chunker;
       Path file = digestToFile.get(digest);
       if (file != null) {
@@ -318,11 +319,11 @@ public class GrpcRemoteCache extends AbstractRemoteActionCache {
 
     // TODO(olaola): inline small stdout/stderr here.
     if (outErr.getErrorPath().exists()) {
-      Digest stderr = uploadFileContents(outErr.getErrorPath());
+      Digest stderr = uploadFileContents(outErr.getErrorPath(), contentId);
       result.setStderrDigest(stderr);
     }
     if (outErr.getOutputPath().exists()) {
-      Digest stdout = uploadFileContents(outErr.getOutputPath());
+      Digest stdout = uploadFileContents(outErr.getOutputPath(), contentId);
       result.setStdoutDigest(stdout);
     }
   }
@@ -333,10 +334,11 @@ public class GrpcRemoteCache extends AbstractRemoteActionCache {
    *
    * @return The key for fetching the file contents blob from cache.
    */
-  private Digest uploadFileContents(Path file) throws IOException, InterruptedException {
+  private Digest uploadFileContents(Path file, String contentId) throws IOException, InterruptedException {
     Digest digest = digestUtil.compute(file);
     ImmutableSet<Digest> missing = getMissingDigests(ImmutableList.of(digest));
     if (!missing.isEmpty()) {
+      log("PUT-CAS," + digest + "," + contentId);
       uploader.uploadBlob(new Chunker(file));
     }
     return digest;
@@ -353,6 +355,7 @@ public class GrpcRemoteCache extends AbstractRemoteActionCache {
     Digest digest = DigestUtil.getFromInputCache(input, inputCache);
     ImmutableSet<Digest> missing = getMissingDigests(ImmutableList.of(digest));
     if (!missing.isEmpty()) {
+      log("PUT-CAS," + digest);
       uploader.uploadBlob(new Chunker(input, inputCache, execRoot, digestUtil));
     }
     return digest;
