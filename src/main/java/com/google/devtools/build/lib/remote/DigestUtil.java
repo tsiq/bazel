@@ -47,6 +47,11 @@ public class DigestUtil {
     private ActionKey(Digest digest) {
       this.digest = digest;
     }
+
+    @Override
+    public String toString() {
+      return this.digest.toString();
+    }
   }
 
   private final HashFunction hashFn;
